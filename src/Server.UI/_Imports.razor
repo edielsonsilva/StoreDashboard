@@ -1,0 +1,51 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Reflection
+@using System.Text
+@using System.ComponentModel
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Localization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.JSInterop
+@using MudBlazor
+@using MediatR
+@using AutoMapper
+@using AutoMapper.QueryableExtensions
+@using FluentValidation;
+@using StoreDashboard.Blazor.Domain
+@using StoreDashboard.Blazor.Server.UI.Components
+@using StoreDashboard.Blazor.Server.UI.Components.Forms
+@using StoreDashboard.Blazor.Server.UI.Components.Breadcrumbs
+@using StoreDashboard.Blazor.Server.UI.Components.LoadingButton
+@using StoreDashboard.Blazor.Server.UI.Components.Dialogs
+@using StoreDashboard.Blazor.Server.UI.Components.Identity
+@using StoreDashboard.Blazor.Server.UI.Pages.Identity.Authentication
+@using StoreDashboard.Blazor.Server.UI.Components.Localization
+@using StoreDashboard.Blazor.Server.UI.Components.OptionSelect
+@using StoreDashboard.Blazor.Server.UI.Components.Redirections
+@using StoreDashboard.Blazor.Server.UI.Components.Shared.Themes
+@using StoreDashboard.Blazor.Server.UI.Components.Shared.Layout
+@using StoreDashboard.Blazor.Application.Common.Interfaces
+@using StoreDashboard.Blazor.Server.UI.Services
+@using Severity=MudBlazor.Severity
+@using Color = MudBlazor.Color
+@inject IApplicationSettings ApplicationSettings
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject IConfiguration Config
+@inject IAuthorizationService AuthService 
+@inject IValidationService Validator
+@inject IJSRuntime JS
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+@inject DialogServiceHelper DialogServiceHelper
+@inject IPermissionService PermissionService
+@inject IMapper Mapper

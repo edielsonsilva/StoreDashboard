@@ -1,0 +1,72 @@
+﻿using Microsoft.AspNetCore.Components.Forms;
+using StoreDashboard.Blazor.Application.Common.Interfaces;
+using StoreDashboard.Blazor.Application.Common.Interfaces.Caching;
+using StoreDashboard.Blazor.Application.Common.Models;
+using StoreDashboard.Blazor.Application.Features.Products.Caching;
+using StoreDashboard.Blazor.Application.Features.Products.DTOs;
+using StoreDashboard.Blazor.Domain.Common.Events;
+using StoreDashboard.Blazor.Domain.Entities;
+
+namespace StoreDashboard.Blazor.Application.Features.Products.Commands.AddEdit;
+
+public class AddEditProductCommand : ICacheInvalidatorRequest<Result<int>>
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Unit { get; set; }
+    public string? Brand { get; set; }
+    public decimal Price { get; set; }
+    public List<ProductImage>? Pictures { get; set; }
+
+    public IReadOnlyList<IBrowserFile>? UploadPictures { get; set; }
+    public string CacheKey => ProductCacheKey.GetAllCacheKey;
+    public IEnumerable<string>? Tags => ProductCacheKey.Tags;
+    private class Mapping : Profile
+    {
+        public Mapping()
+        {
+            CreateMap<ProductDto, AddEditProductCommand>(MemberList.None);
+            CreateMap<AddEditProductCommand, Product>(MemberList.None);
+        }
+    }
+}
+
+public class AddEditProductCommandHandler : IRequestHandler<AddEditProductCommand, Result<int>>
+{
+    private readonly IMapper _mapper;
+    private readonly IApplicationDbContext _context;
+
+    public AddEditProductCommandHandler(
+        IMapper mapper,
+        IApplicationDbContext context
+    )
+    {
+        _mapper = mapper;
+        _context = context;
+    }
+
+    public async Task<Result<int>> Handle(AddEditProductCommand request, CancellationToken cancellationToken)
+    {
+        if (request.Id > 0)
+        {
+            var item = await _context.Products.SingleOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+            if (item == null)
+            {
+                return await Result<int>.FailureAsync($"Prduct with id: [{request.Id}] not found.");
+            }
+            item = _mapper.Map(request, item);
+            item.AddDomainEvent(new UpdatedEvent<Product>(item));
+            await _context.SaveChangesAsync(cancellationToken);
+            return await Result<int>.SuccessAsync(item.Id);
+        }
+        else
+        {
+            var item = _mapper.Map<Product>(request);
+            item.AddDomainEvent(new CreatedEvent<Product>(item));
+            _context.Products.Add(item);
+            await _context.SaveChangesAsync(cancellationToken);
+            return await Result<int>.SuccessAsync(item.Id);
+        }
+    }
+}

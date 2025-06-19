@@ -1,0 +1,55 @@
+﻿using StoreDashboard.Blazor.Application.Common.Interfaces;
+using StoreDashboard.Blazor.Application.Common.Interfaces.Caching;
+using StoreDashboard.Blazor.Application.Features.SystemLogs.Caching;
+using StoreDashboard.Blazor.Application.Features.SystemLogs.DTOs;
+
+namespace StoreDashboard.Blazor.Application.Features.SystemLogs.Queries.ChatData;
+
+public class SystemLogsTimeLineChatDataQuery : ICacheableRequest<List<SystemLogTimeLineDto>>
+{
+    public DateTime LastDateTime { get; set; } = DateTime.Now.AddDays(-60);
+    public string CacheKey => SystemLogsCacheKey.GetChartDataCacheKey(LastDateTime.ToString());
+    public IEnumerable<string>? Tags => SystemLogsCacheKey.Tags;
+}
+
+public class SystemLogsChatDataQueryHandler : IRequestHandler<SystemLogsTimeLineChatDataQuery, List<SystemLogTimeLineDto>>
+
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IStringLocalizer<SystemLogsChatDataQueryHandler> _localizer;
+
+    public SystemLogsChatDataQueryHandler(
+        IApplicationDbContext context,
+        IStringLocalizer<SystemLogsChatDataQueryHandler> localizer
+    )
+    {
+            _context = context;
+            _localizer = localizer;
+        }
+
+    public async Task<List<SystemLogTimeLineDto>> Handle(SystemLogsTimeLineChatDataQuery request,
+        CancellationToken cancellationToken)
+    {
+            var data = await _context.SystemLogs.Where(x => x.TimeStamp >= request.LastDateTime)
+                .GroupBy(x => new { x.TimeStamp.Date })
+                .Select(x => new { x.Key.Date, Total = x.Count() })
+                .OrderBy(x => x.Date)
+                .ToListAsync(cancellationToken);
+
+            List<SystemLogTimeLineDto> result = new();
+            DateTime end = new(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+            var start = request.LastDateTime.Date;
+
+            while (start <= end)
+            {
+                var item = data.FirstOrDefault(x => x.Date == start.Date);
+                result.Add(item != null
+                    ? new SystemLogTimeLineDto { dt = item.Date, total = item.Total }
+                    : new SystemLogTimeLineDto { dt = start, total = 0 });
+
+                start = start.AddDays(1);
+            }
+
+            return result.OrderBy(x => x.dt).ToList();
+        }
+}
